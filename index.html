@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>They Said 'Now Try It With Real Tokens.' So I Did.</title>
+<meta name="description" content="How to import design tokens into Figma and make Claude Code build button components that use them as real, bound Figma variables. No more hardcoded hex values. A guide for AI noobs, by a noob.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fff;
+  --text:#1a1a1a;
+  --gray:#6b6b6b;
+  --light:#f2f2f2;
+  --border:#e6e6e6;
+  --accent:#1a8917;
+  --accent-light:#e8f5e8;
+  --red:#c94a4a;
+  --code-bg:#f7f7f7;
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+  --sans:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'Source Code Pro','Courier New',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:1.125rem;line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px;transition:text-decoration-color .2s}
+a:hover{text-decoration-color:var(--text)}
+::selection{background:#c8edca}
+.col{max-width:680px;margin:0 auto;padding:0 24px}
+.hero{padding:80px 24px 48px;text-align:center}
+.hero h1{font-family:var(--serif);font-size:clamp(2rem,5.5vw,3.2rem);font-weight:800;line-height:1.18;max-width:720px;margin:0 auto 20px;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;font-weight:400}
+.hero-sub{font-size:1.15rem;color:var(--gray);max-width:560px;margin:0 auto;line-height:1.7}
+.divider{width:100%;max-width:680px;margin:48px auto;padding:0 24px}
+.divider hr{border:none;border-top:1px solid var(--border)}
+.prose{max-width:680px;margin:0 auto;padding:0 24px}
+.prose h2{font-family:var(--serif);font-size:1.75rem;font-weight:700;margin:56px 0 16px;letter-spacing:-.01em;line-height:1.3}
+.prose h3{font-family:var(--sans);font-size:1.15rem;font-weight:700;margin:32px 0 8px}
+.prose p{color:var(--gray);margin-bottom:16px}
+.prose p strong{color:var(--text);font-weight:600}
+.prose p em{font-style:italic;color:var(--text)}
+.prose>blockquote{border-left:3px solid var(--text);padding:4px 0 4px 20px;margin:28px 0;font-family:var(--serif);font-size:1.2rem;font-style:italic;color:var(--text);line-height:1.6}
+.callout{background:var(--code-bg);border-radius:4px;padding:20px 24px;margin:24px 0}
+.callout p{color:var(--gray);font-size:.95rem;margin-bottom:8px}
+.callout p:last-child{margin-bottom:0}
+.callout p strong{color:var(--text)}
+.phase-label{font-family:var(--sans);font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:64px 0 8px;display:block}
+.step{margin:0 0 36px;padding:28px 0;border-bottom:1px solid var(--border)}
+.step:last-of-type{border-bottom:none}
+.step-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.step-check{position:relative;flex-shrink:0;width:32px;height:32px;margin-top:2px}
+.step-check input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%;height:100%;margin:0}
+.step-check .check-visual{width:32px;height:32px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:.8rem;font-weight:700;color:var(--gray);transition:all .25s ease;background:var(--bg)}
+.step-check input:checked+.check-visual{background:var(--accent);border-color:var(--accent);color:#fff}
+.step-check input:checked+.check-visual .check-num{display:none}
+.step-check input:checked+.check-visual::after{content:'✓';font-size:.85rem;color:#fff}
+.step.done{opacity:.55}
+.step.done:hover{opacity:.8}
+.step.done .step-title{text-decoration:line-through;text-decoration-color:rgba(26,137,23,.3)}
+.step-title{font-family:var(--serif);font-size:1.25rem;font-weight:700;line-height:1.35;letter-spacing:-.01em}
+.step-sub{font-size:.9rem;color:var(--gray);margin-top:2px}
+.step p{color:var(--gray);font-size:.95rem;margin-bottom:10px}
+.step p strong{color:var(--text)}
+.step p:last-child{margin-bottom:0}
+.cmd{background:var(--text);color:#e0e0e0;border-radius:6px;padding:16px 20px;margin:12px 0;font-family:var(--mono);font-size:.82rem;line-height:1.75;overflow-x:auto;white-space:pre-wrap;word-break:break-all;position:relative}
+.cmd-copy{position:absolute;bottom:8px;right:10px;background:none;border:none;font-family:var(--mono);font-size:.72rem;font-weight:500;color:#7dde7d;cursor:pointer;padding:2px 6px;opacity:.6;transition:opacity .2s}
+.cmd-copy:hover{opacity:1}
+.cmd-label{display:block;font-family:var(--sans);font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#888;margin-bottom:4px}
+.cmd .hi{color:#7dde7d}
+.tip{padding:12px 16px;margin:12px 0;border-radius:4px;font-size:.88rem;color:var(--gray);line-height:1.7;background:var(--code-bg)}
+.tip.warn{background:#fff8e6;border-left:3px solid #e6b800}
+.tip.danger{background:#fef2f2;border-left:3px solid var(--red)}
+.tip.success{background:var(--accent-light);border-left:3px solid var(--accent)}
+.tip.info{background:#f0f4ff;border-left:3px solid #4a7dff}
+.tip .tip-icon{margin-right:6px}
+.tip strong{color:var(--text)}
+code{background:var(--code-bg);padding:2px 6px;border-radius:3px;font-family:var(--mono);font-size:.82em}
+.json-block{background:var(--text);border-radius:6px;padding:20px;margin:12px 0;font-family:var(--mono);font-size:.78rem;color:#e0e0e0;overflow-x:auto;white-space:pre;line-height:1.7;position:relative}
+.json-key{color:#7ec8e3}
+.json-string{color:#ce9178}
+.json-number{color:#b5cea8}
+.json-comment{color:#6a9955;font-style:italic}
+.progress-bar{max-width:680px;margin:0 auto;padding:0 24px;position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding-top:12px;padding-bottom:12px}
+.progress-inner{display:flex;align-items:center;gap:12px}
+.progress-track{flex:1;height:3px;background:var(--light);border-radius:100px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .4s ease;width:0%}
+.progress-text{font-size:.78rem;font-weight:600;color:var(--gray);white-space:nowrap}
+.compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.9rem}
+.compare-table th{text-align:left;padding:12px 16px;border-bottom:2px solid var(--text);font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.compare-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)}
+.compare-table td strong{color:var(--text)}
+.compare-table tr:last-child td{border-bottom:none}
+.requirements{background:var(--code-bg);border-radius:4px;padding:24px;margin:24px 0}
+.requirements h3{margin-top:0;font-size:1rem;font-weight:700;margin-bottom:12px}
+.req-item{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:.9rem;color:var(--gray)}
+.req-check{color:var(--accent);font-weight:700}
+.cheatsheet{background:var(--code-bg);border-radius:4px;padding:32px;margin:48px 0}
+.cheatsheet h3{font-family:var(--serif);font-size:1.25rem;margin-top:0;margin-bottom:16px}
+.cheatsheet ul{list-style:disc;padding-left:20px;font-size:.9rem;color:var(--gray)}
+.cheatsheet li{margin-bottom:8px}
+#celebration{text-align:center;padding:48px 0;display:none}
+#celebration h2{font-family:var(--serif);font-size:1.75rem;margin-bottom:12px}
+#celebration p{color:var(--gray);font-size:1rem}
+.footer{max-width:680px;margin:0 auto;padding:64px 24px 80px;text-align:center;border-top:1px solid var(--border)}
+.footer h2{font-family:var(--serif);font-size:1.75rem;font-weight:700;margin-bottom:12px}
+.footer p{color:var(--gray);font-size:1rem;margin-bottom:8px}
+@media(max-width:600px){
+  .hero{padding:48px 20px 32px}
+  .hero h1{font-size:1.8rem}
+  .step-header{gap:10px}
+  .step-check,.step-check .check-visual{width:28px;height:28px;font-size:.72rem}
+  .json-block{font-size:.7rem;padding:14px}
+}
+.logo{text-align:center;padding:32px 0 0}
+.logo a{font-family:var(--sans);font-weight:900;font-size:1.1rem;letter-spacing:-.02em;color:var(--text);text-decoration:none;transition:letter-spacing .4s cubic-bezier(.34,1.56,.64,1)}
+.logo a:hover{letter-spacing:.15em}
+</style>
+</head>
+<body>
+
+<div class="logo"><a href="https://seeonk.com" target="_blank">SEE</a></div>
+
+<header class="hero">
+  <p class="hero-sub" style="margin-bottom:24px">How to import design tokens into Figma and make Claude Code build button components that use them as real, bound variables. No more hardcoded hex values.</p>
+  <h1>They Said 'Now Try It With Real Tokens.' So I Did. <em>And Failed. And Got It Working.</em></h1>
+  <p style="font-size:.88rem;color:var(--gray);margin-top:12px;margin-bottom:0">A guide for AI noobs, by <a href="https://seeonk.com" target="_blank" style="color:var(--text);font-weight:600">Seeon Kim</a></p>
+</header>
+
+<div class="divider" style="margin-top:16px"><hr></div>
+
+<article class="prose">
+
+  <!-- Intro -->
+  <p>So remember <a href="https://figma-guide-toec.vercel.app/" target="_blank">my last guide</a>? The one where I got Claude Code to build button components in Figma? That was fun. That worked. But the buttons used hardcoded hex colors. Just <code>#2563EB</code> sitting there, raw, not connected to anything. Like painting a house by hand when you could be using a paint sprayer connected to a color system.</p>
+
+  <p>That bothered me. Because in a real design system, you don't hardcode colors. You use <strong>tokens</strong>. Variables. Semantic names like <code>button/primary/bg/default</code> that point to a primitive like <code>color/blue/600</code>. Change the primitive once, and every button, card, and link that references it updates automatically. Light mode, dark mode, rebrand, whatever.</p>
+
+  <p>So I thought: what if I import my design tokens into Figma first, and THEN ask Claude Code to build buttons that actually use those tokens?</p>
+
+  <p>Spoiler: it works. But not the way I expected. And I made approximately seven mistakes getting there. Let me save you the pain.</p>
+
+  <h3>The honest answer first</h3>
+
+  <p>Before we start, let me tell you what I found so you can decide if this is worth your time:</p>
+
+  <p><strong>Can Claude Code read your Figma variables?</strong> Sort of. The MCP bridge has <code>get_styles</code> which sees styles, but it can't directly read Figma variables. You work around this by just telling Claude what tokens you have.</p>
+  <p><strong>Can Claude Code create buttons?</strong> Yes. Frames, fills, text, auto-layout. This part works great.</p>
+  <p><strong>Can Claude Code bind variables to buttons?</strong> Nope. The MCP bridge doesn't have tools for variable binding. Claude told me this directly after I spent way too long trying to make it happen. I asked nicely. I asked firmly. I rephrased the prompt four different ways. Claude finally just said: <em>"I don't have that tool."</em> Respect the honesty.</p>
+  <p><strong>So how do we bind variables?</strong> Two-pass approach. Claude builds the buttons with hardcoded colors (pass 1), then Claude writes you a separate Figma plugin that binds the variables (pass 2). You import that plugin into Figma and run it. Takes 30 seconds. It works.</p>
+
+</article>
+
+<div class="col">
+  <div class="callout">
+    <p><strong>What you need before starting:</strong></p>
+    <p>&#10003; Completed my <a href="https://figma-guide-toec.vercel.app/" target="_blank">first guide</a> (Claude Code + MCP + Figma already working)</p>
+    <p>&#10003; Paid Figma plan (variables require Figma Professional or higher)</p>
+    <p>&#10003; Paid Claude plan (Claude Code uses API credits)</p>
+    <p>&#10003; Your design tokens in a JSON file (I'll show you a starter one)</p>
+    <p>&#10003; Token Studio plugin installed in Figma (free version is fine)</p>
+    <p>&#10003; Patience. Lots of it.</p>
+  </div>
+  <video controlslist="nodownload" oncontextmenu="return false;" controls playsinline muted loop style="width:100%;border-radius:6px;margin:24px 0">
+    <source src="demo-video.mov" type="video/mp4">
+  </video>
+</div>
+
+<div class="progress-bar">
+  <div class="progress-inner">
+    <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+    <div class="progress-text" id="progTxt">0 / 11</div>
+  </div>
+</div>
+
+<div class="col">
+  <span class="phase-label">Part 1: Set up your design tokens</span>
+  <p style="color:var(--gray);margin-bottom:24px">First, we need tokens in Figma. If you already have variables imported, skip to Part 2.</p>
+
+  <!-- ============ STEP 0 ============ -->
+  <div class="step" data-step="0">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="0"><div class="check-visual"><span class="check-num">0</span></div></label>
+      <div>
+        
+        <div class="step-title">Prepare your design tokens JSON</div>
+      </div>
+    </div>
+    
+      <p>In a real design system, tokens come in two layers. This is how most teams and tools (Material Design, Spectrum, Carbon and more) recommend structuring them:</p>
+
+      <p><strong>Primitive tokens</strong> = the raw ingredients. Actual hex colors, pixel values, font sizes. These are your palette. They don't tell you what they're used for.</p>
+
+      <p><strong>Semantic tokens</strong> = what the value is FOR. They reference a primitive by name. So instead of <code>#2563EB</code>, you say <code>{color.blue.600}</code>. This way, if you rebrand and change your blue, you update ONE primitive and everything downstream updates.</p>
+
+      <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;margin:28px 0;font-family:'Source Sans 3','Segoe UI',sans-serif">
+        <rect width="720" height="260" rx="8" fill="#f7f8fa"/>
+        <!-- Column headers -->
+        <text x="80" y="32" font-size="13" font-weight="700" fill="#6b6b6b" text-anchor="middle">Hard-coded value</text>
+        <text x="280" y="32" font-size="13" font-weight="700" fill="#6b6b6b" text-anchor="middle">Primitive token</text>
+        <text x="490" y="32" font-size="13" font-weight="700" fill="#6b6b6b" text-anchor="middle">Semantic token</text>
+        <text x="660" y="32" font-size="13" font-weight="700" fill="#6b6b6b" text-anchor="middle">Component</text>
+
+        <!-- Hard-coded value -->
+        <rect x="30" y="100" width="40" height="40" rx="4" fill="#2563EB"/>
+        <text x="100" y="126" font-size="14" fill="#1a1a1a" font-family="'Source Code Pro',monospace">#2563EB</text>
+
+        <!-- Arrow 1 -->
+        <line x1="162" y1="120" x2="195" y2="120" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="195,116 203,120 195,124" fill="#c8c8c8"/>
+
+        <!-- Primitive token pill -->
+        <rect x="208" y="102" width="140" height="36" rx="8" fill="#2563EB"/>
+        <text x="278" y="126" font-size="14" font-weight="600" fill="#fff" text-anchor="middle">Blue 600</text>
+
+        <!-- Arrow 2 (branches) -->
+        <line x1="352" y1="120" x2="380" y2="120" stroke="#c8c8c8" stroke-width="1.5"/>
+        <!-- branch to top -->
+        <path d="M380,120 Q390,120 390,80" stroke="#c8c8c8" stroke-width="1.5" fill="none"/>
+        <line x1="390" y1="80" x2="405" y2="80" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="405,76 413,80 405,84" fill="#c8c8c8"/>
+        <!-- branch to middle -->
+        <line x1="380" y1="120" x2="405" y2="120" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="405,116 413,120 405,124" fill="#c8c8c8"/>
+        <!-- branch to bottom -->
+        <path d="M380,120 Q390,120 390,160" stroke="#c8c8c8" stroke-width="1.5" fill="none"/>
+        <line x1="390" y1="160" x2="405" y2="160" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="405,156 413,160 405,164" fill="#c8c8c8"/>
+
+        <!-- Semantic token pills -->
+        <rect x="416" y="62" width="160" height="34" rx="6" fill="#eef1f5"/>
+        <text x="496" y="84" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-family="'Source Code Pro',monospace">button/primary/bg</text>
+
+        <rect x="416" y="102" width="160" height="34" rx="6" fill="#eef1f5"/>
+        <text x="496" y="124" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-family="'Source Code Pro',monospace">button/primary/hover</text>
+
+        <rect x="416" y="142" width="160" height="34" rx="6" fill="#eef1f5"/>
+        <text x="496" y="164" font-size="11.5" fill="#1a1a1a" text-anchor="middle" font-family="'Source Code Pro',monospace">link/primary/text</text>
+
+        <!-- Arrows to components -->
+        <line x1="580" y1="80" x2="610" y2="80" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="610,76 618,80 610,84" fill="#c8c8c8"/>
+        <line x1="580" y1="120" x2="610" y2="120" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="610,116 618,120 610,124" fill="#c8c8c8"/>
+        <line x1="580" y1="160" x2="610" y2="160" stroke="#c8c8c8" stroke-width="1.5"/>
+        <polygon points="610,156 618,160 610,164" fill="#c8c8c8"/>
+
+        <!-- Component buttons -->
+        <rect x="622" y="64" width="80" height="32" rx="6" fill="#2563EB"/>
+        <text x="662" y="85" font-size="12" font-weight="600" fill="#fff" text-anchor="middle">Button</text>
+
+        <rect x="622" y="104" width="80" height="32" rx="6" fill="#1D4ED8"/>
+        <text x="662" y="125" font-size="12" font-weight="600" fill="#fff" text-anchor="middle">Button</text>
+
+        <text x="662" y="165" font-size="13" font-weight="600" fill="#2563EB" text-anchor="middle" text-decoration="underline">Learn more</text>
+
+        <!-- Bottom annotation -->
+        <text x="360" y="220" font-size="12" fill="#6b6b6b" text-anchor="middle" font-style="italic">Change one primitive → every semantic token referencing it updates automatically</text>
+        <line x1="140" y1="232" x2="580" y2="232" stroke="#e6e6e6" stroke-width="1"/>
+        <text x="360" y="248" font-size="11" fill="#999" text-anchor="middle">This is why you don't hardcode hex values in components</text>
+      </svg>
+
+      <p>We're going to create both. Two JSON files.</p>
+
+      <h3>File 1: primitive.json</h3>
+      <p>Save this as <code>primitive.json</code> on your Desktop. These are your raw values.</p>
+
+      <div class="json-block">{
+  <span class="json-key">"color"</span>: {
+    <span class="json-key">"blue"</span>: {
+      <span class="json-key">"50"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#EFF6FF"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"100"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#DBEAFE"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"300"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#93C5FD"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"500"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#3B82F6"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"600"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#2563EB"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"700"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#1D4ED8"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"800"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#1E40AF"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+    },
+    <span class="json-key">"gray"</span>: {
+      <span class="json-key">"50"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#F9FAFB"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"200"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#E5E7EB"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"500"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#6B7280"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"600"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#4B5563"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+      <span class="json-key">"700"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#374151"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+    },
+    <span class="json-key">"white"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#FFFFFF"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+    <span class="json-key">"black"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"#000000"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+  },
+  <span class="json-key">"space"</span>: {
+    <span class="json-key">"0"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"0"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"1"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"4"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"2"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"8"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"3"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"12"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"4"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"16"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"5"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"20"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+    <span class="json-key">"6"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"24"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> }
+  },
+  <span class="json-key">"radius"</span>: {
+    <span class="json-key">"none"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"0"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+    <span class="json-key">"sm"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"4"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+    <span class="json-key">"md"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"8"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+    <span class="json-key">"lg"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"12"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+    <span class="json-key">"full"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"9999"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> }
+  },
+  <span class="json-key">"fontSize"</span>: {
+    <span class="json-key">"xs"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"12"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> },
+    <span class="json-key">"sm"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"14"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> },
+    <span class="json-key">"md"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"16"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> }
+  },
+  <span class="json-key">"fontWeight"</span>: {
+    <span class="json-key">"regular"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"400"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontWeights"</span> },
+    <span class="json-key">"medium"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"500"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontWeights"</span> },
+    <span class="json-key">"semibold"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"600"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontWeights"</span> }
+  }
+}</div>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> Think of primitives like paint cans on a shelf. <code>blue/600</code> is just "this specific shade of blue." It doesn't know it's going to be a button.
+      </div>
+
+      <h3>File 2: semantic.json</h3>
+      <p>Save this as <code>semantic.json</code> on your Desktop. These reference the primitives using the <code>{primitive.path}</code> syntax that Token Studio understands.</p>
+
+      <div class="json-block">{
+  <span class="json-key">"button"</span>: {
+    <span class="json-key">"primary"</span>: {
+      <span class="json-key">"bg"</span>: {
+        <span class="json-key">"default"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.blue.600}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"hover"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.blue.700}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"pressed"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.blue.800}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"disabled"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.blue.300}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+      },
+      <span class="json-key">"text"</span>: {
+        <span class="json-key">"default"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.white}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"disabled"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.blue.100}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+      }
+    },
+    <span class="json-key">"secondary"</span>: {
+      <span class="json-key">"bg"</span>: {
+        <span class="json-key">"default"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.white}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"hover"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.gray.50}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+      },
+      <span class="json-key">"border"</span>: {
+        <span class="json-key">"default"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.gray.200}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> },
+        <span class="json-key">"hover"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.gray.500}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+      },
+      <span class="json-key">"text"</span>: {
+        <span class="json-key">"default"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{color.gray.700}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"color"</span> }
+      }
+    },
+    <span class="json-key">"padding"</span>: {
+      <span class="json-key">"sm"</span>: {
+        <span class="json-key">"horizontal"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.2}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+        <span class="json-key">"vertical"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.1}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> }
+      },
+      <span class="json-key">"md"</span>: {
+        <span class="json-key">"horizontal"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.3}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+        <span class="json-key">"vertical"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.2}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> }
+      },
+      <span class="json-key">"lg"</span>: {
+        <span class="json-key">"horizontal"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.4}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> },
+        <span class="json-key">"vertical"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{space.3}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"spacing"</span> }
+      }
+    },
+    <span class="json-key">"radius"</span>: {
+      <span class="json-key">"sm"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{radius.sm}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+      <span class="json-key">"md"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{radius.md}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> },
+      <span class="json-key">"lg"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{radius.md}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"borderRadius"</span> }
+    },
+    <span class="json-key">"fontSize"</span>: {
+      <span class="json-key">"sm"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{fontSize.xs}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> },
+      <span class="json-key">"md"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{fontSize.sm}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> },
+      <span class="json-key">"lg"</span>: { <span class="json-key">"value"</span>: <span class="json-string">"{fontSize.md}"</span>, <span class="json-key">"type"</span>: <span class="json-string">"fontSizes"</span> }
+    }
+  }
+}</div>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> See the <code>{color.blue.600}</code> references? That's the magic. Semantic tokens don't hold actual values. They point to primitives. So if you rebrand from blue to purple, you change ONE primitive file, and every button, card, link, and icon that references it updates automatically.
+      </div>
+
+      <div class="tip info">
+        <span class="tip-icon">💡</span> <strong>Why two files?</strong> In Token Studio, each JSON file becomes a "token set." You enable both sets, and the plugin resolves the references. The primitive set has the raw values, the semantic set has the aliases. This is how teams at Shopify, GitHub, Atlassian, and most design systems in the real world structure their tokens.
+      </div>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Important:</strong> Token Studio needs BOTH sets active for the references to resolve. If you only import <code>semantic.json</code> without <code>primitive.json</code>, the <code>{color.blue.600}</code> references will break because there's nothing to point to.
+      </div>
+  </div>
+
+  <!-- ============ STEP 1 ============ -->
+  <div class="step" data-step="1">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="1"><div class="check-visual"><span class="check-num">1</span></div></label>
+      <div>
+        
+        <div class="step-title">Install Token Studio in Figma</div>
+      </div>
+    </div>
+    
+      <p>Open Figma Desktop. Go to the Community tab (the little people icon on the left sidebar). Search for <strong>"Tokens Studio for Figma"</strong>. Click <strong>Install</strong>. That's it.</p>
+
+      <p>If you already have it installed, make sure it's updated. Old versions sometimes have issues importing JSON.</p>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> Token Studio is the bridge between your JSON tokens and Figma's native variables. It reads your JSON, creates Figma variables from it, and keeps them in sync. The free version handles everything we need here.
+      </div>
+  </div>
+
+  <!-- ============ STEP 2 ============ -->
+  <div class="step" data-step="2">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="2"><div class="check-visual"><span class="check-num">2</span></div></label>
+      <div>
+        
+        <div class="step-title">Import your JSON tokens into Figma</div>
+      </div>
+    </div>
+    
+      <p>Open a Figma file (create a new one if you want a clean slate). Then:</p>
+
+      <p><strong>Open Token Studio:</strong> Right-click on the canvas, or go to Menu &#8594; Plugins &#8594; Tokens Studio for Figma.</p>
+
+      <p><strong>Start a new project:</strong> If it asks, choose "New empty file."</p>
+
+      <p><strong>Create the primitive token set:</strong> In Token Studio, you'll see a sidebar on the left with token sets. Click the <strong>+</strong> icon to create a new set. Name it <code>primitive</code>. Switch to JSON view (toggle at top right), delete the default content, and paste your <code>primitive.json</code> content.</p>
+
+      <p><strong>Create the semantic token set:</strong> Click <strong>+</strong> again to create another set. Name it <code>semantic</code>. Switch to JSON view, and paste your <code>semantic.json</code> content.</p>
+
+      <p><strong>Enable BOTH sets:</strong> In the left sidebar, make sure both <code>primitive</code> and <code>semantic</code> have their checkboxes checked (active). The semantic tokens need the primitives to resolve their <code>{references}</code>. If you only enable one, the references will show as broken.</p>
+
+      <p><strong>Push to Figma:</strong> Click the "Styles & Variables" button at the bottom of the Token Studio panel. Select "Export variables." Choose "Create new variables" and confirm.</p>
+
+      <img src="token-studio-export.png" alt="Token Studio showing primitive and semantic sets with Styles & Variables export menu" style="width:100%;border-radius:6px;margin:20px 0">
+
+      <p>Now open Figma's native Variables panel (click the grid icon in the right sidebar, or go to the local variables panel). You should see your tokens there as Figma variables.</p>
+
+      <div class="tip success">
+        <span class="tip-icon">&#10003;</span> <strong>How to verify it worked:</strong> Open the Variables panel in Figma. You should see collections with your primitive values (like <code>color/blue/600 = #2563EB</code>) AND your semantic values (like <code>button/primary/bg/default</code> which aliases to <code>color/blue/600</code>). The semantic ones should show a little chain-link icon meaning they reference another variable.
+      </div>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Common issue:</strong> If semantic tokens show raw hex values instead of references, it means Token Studio exported them as resolved values instead of aliases. That still works for our purpose (Claude can read and bind them either way), but you lose the "change one primitive, update everything" magic. To fix this, make sure both token sets are enabled before exporting.
+      </div>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Another common issue:</strong> Token Studio might group all tokens into one variable collection. Or it might create separate collections per token set. Both are fine. What matters is that the variables exist and have correct values.
+      </div>
+  </div>
+
+  <span class="phase-label">Part 2: Connect Claude to Figma</span>
+
+  <p>Same setup as the first guide. If you've done this before, it's just the 3-window dance: socket server, Figma plugin, Claude Code.</p>
+
+  <!-- ============ STEP 3 ============ -->
+  <div class="step" data-step="3">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="3"><div class="check-visual"><span class="check-num">3</span></div></label>
+      <div>
+        
+        <div class="step-title">Make sure your MCP bridge is running</div>
+      </div>
+    </div>
+    
+      <p>This assumes you completed my <a href="https://figma-guide-toec.vercel.app/" target="_blank">first guide</a>. You need three things running:</p>
+
+      <p><strong>Terminal 1</strong> (the socket server):</p>
+      <div class="cmd"><span class="cmd-label">start the websocket</span>cd ~/cursor-talk-to-figma-mcp && bun run src/socket.ts</div>
+
+      <p>Should say: <code>WebSocket server running on port 3055</code></p>
+
+      <p><strong>Figma Plugin</strong> (the MCP bridge): Open your Figma file. Run the "Talk to Figma MCP" plugin from the Plugins menu. It should show "Connected" with a green dot and a Channel ID.</p>
+
+      <p><strong>Terminal 2</strong> (Claude Code): Open a new Terminal window.</p>
+      <div class="cmd"><span class="cmd-label">start claude code</span>claude</div>
+
+      <p>Then tell Claude to join the channel:</p>
+      <div class="cmd"><span class="cmd-label">connect to figma</span>Talk to Figma, join channel [paste-your-channel-ID-here]</div>
+
+      <div class="tip danger">
+        <span class="tip-icon">&#9888;</span> <strong>Remember:</strong> Terminal 1 = the socket. Don't touch it. Terminal 2 = where you talk to Claude. The Figma plugin window must stay open. Close any of these three and the connection breaks.
+      </div>
+  </div>
+
+  <span class="phase-label">Part 3: Build a test button</span>
+
+  <p>Here's where it gets interesting. We're going to build ONE button first, bind its variables, verify the whole pipeline works, and THEN build the rest. Trust the process.</p>
+
+  <!-- ============ STEP 4 ============ -->
+  <div class="step" data-step="4">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="4"><div class="check-visual"><span class="check-num">4</span></div></label>
+      <div>
+        
+        <div class="step-title">Build ONE test button with Claude</div>
+      </div>
+    </div>
+    
+      <p>Now here's where it gets real. You're going to ask Claude Code to build ONE button. Not all 6. Just one. Because if something breaks (and something always breaks), you want to know exactly where.</p>
+
+      <p>Here's what I learned the hard way: <strong>don't ask Claude to bind variables in this step.</strong> The MCP bridge can't do it. It can create shapes, set colors, add text, but it cannot bind Figma variables to nodes. I tried. I begged. Claude said no. So we're doing this in two passes.</p>
+
+      <p>Paste this into Claude Code (Terminal 2):</p>
+
+      <div class="cmd"><span class="cmd-label">the test button prompt</span>Create ONE test button in Figma with these specs:
+
+- It's a frame with auto-layout containing a text label that says "Button"
+- Fill color: #2563EB (blue)
+- Text color: #FFFFFF (white)
+- Font weight: 600 (semibold)
+- Horizontal padding: 12, vertical padding: 8
+- Corner radius: 8
+- Font size: 14
+
+Name the frame exactly: Style=Primary, Size=Medium
+
+Just this one button. Nothing else yet.</div>
+
+      <p>Claude will start creating elements on your Figma canvas. You'll see the MCP plugin logging commands in its panel. Let it cook.</p>
+
+      <p>Once it's done, check the canvas. You should see one blue button with white text. Click on it and verify in the right sidebar: auto-layout is on, fill is #2563EB, it's named <code>Style=Primary, Size=Medium</code> in the layers panel.</p>
+
+      <img src="test-button-result.png" alt="Test button created by Claude Code showing blue button with #2563EB fill in Figma" style="width:100%;border-radius:6px;margin:20px 0">
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> Notice the hex values I used (#2563EB, #FFFFFF, etc.) match our primitive tokens exactly. This is intentional. The binding script in the next step will match these hex values to the corresponding Figma variables.
+      </div>
+  </div>
+
+  <!-- ============ STEP 5 ============ -->
+  <div class="step" data-step="5">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="5"><div class="check-visual"><span class="check-num">5</span></div></label>
+      <div>
+        
+        <div class="step-title">Ask Claude to write the binding plugin</div>
+      </div>
+    </div>
+    
+      <p>Click the button you just created. Look at the <strong>Fill</strong> section in the right sidebar. See that <code>2563EB</code> with a blue square? That's a raw hex value. No variable icon. No token name. Just a color sitting there, disconnected from your token system. We're about to fix that.</p>
+
+      <p>Since the MCP bridge can't bind variables, we need a Figma plugin that can. The good news: Claude Code can write one for us. The bad news: Claude's code will probably have a typo. (Mine did. Missing parenthesis. Classic.)</p>
+
+      <p>Paste this into Claude Code:</p>
+
+      <div class="cmd"><span class="cmd-label">ask claude for the binding plugin</span>The button is created but the fill is a hardcoded hex value, not bound to a Figma variable. The MCP bridge doesn't support variable binding.
+
+Write me TWO FILES for a standalone Figma plugin that I can import and run:
+
+File 1: manifest.json (name it "Bind Variables", Figma plugin API version "1.0.0")
+
+File 2: code.js that does the following:
+1. Gets all local variables using figma.variables.getLocalVariablesAsync()
+2. Finds ALL frame nodes on the current page whose names start with "Style="
+3. For Primary buttons (name contains "Style=Primary"): binds button/primary/bg/default to fills, binds button/primary/text/default to the text label fills
+4. For Secondary buttons (name contains "Style=Secondary"): binds button/secondary/bg/default to fills, binds button/secondary/border/default to strokes, binds button/secondary/text/default to text label fills
+5. For Small buttons: binds button/padding/sm/horizontal to paddingLeft+paddingRight, button/padding/sm/vertical to paddingTop+paddingBottom, button/radius/sm to all corner radii
+6. For Medium buttons: binds button/padding/md/horizontal, button/padding/md/vertical, button/radius/md
+7. For Large buttons: binds button/padding/lg/horizontal, button/padding/lg/vertical, button/radius/lg
+8. Uses setBoundVariableForPaint() for color bindings and setBoundVariable() for spacing/radius
+9. Logs every binding it makes
+10. IMPORTANT: Find buttons by searching the page for nodes whose names match, NOT by hardcoded node IDs. This way I can re-run the plugin after adding more buttons.
+
+Put both files in ~/figma-bind-variables/</div>
+
+      <p>Claude will create the files. But before you run them...</p>
+
+      <div class="tip danger">
+        <span class="tip-icon">&#9888;</span> <strong>Check for typos.</strong> When Claude wrote my binding script, it had a syntax error: <code>console.warn`Node not found: ${name}`)</code> was missing an opening parenthesis. Should be <code>console.warn(`Node not found: ${name}`)</code>. Ask Claude to double-check the script before you run it.
+      </div>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> Verify the files were created. In Claude Code, type: <code>ls ~/figma-bind-variables/</code> and you should see <code>manifest.json</code> and <code>code.js</code>.
+      </div>
+
+      <div class="tip info">
+        <span class="tip-icon">💡</span> <strong>Key detail:</strong> The prompt says "find buttons by searching the page, NOT by hardcoded node IDs." This is important. If we hardcode node IDs, we'd need to update the script every time we add new buttons. By searching for nodes named <code>Style=Primary...</code> or <code>Style=Secondary...</code>, the plugin will find and bind ALL buttons, even ones we create later.
+      </div>
+  </div>
+
+  <!-- ============ STEP 6 ============ -->
+  <div class="step" data-step="6">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="6"><div class="check-visual"><span class="check-num">6</span></div></label>
+      <div>
+        
+        <div class="step-title">Import and run the binding plugin</div>
+      </div>
+    </div>
+    
+      <p>Now we import Claude's binding script as a separate Figma plugin. This keeps your MCP plugin untouched.</p>
+
+      <p><strong>In Figma:</strong></p>
+      <p>1. Go to <strong>Plugins > Development > Import plugin from manifest...</strong></p>
+      <p>2. A file picker opens. Press <strong>Cmd+Shift+G</strong></p>
+      <p>3. Type: <code>~/figma-bind-variables</code></p>
+      <p>4. Select <strong>manifest.json</strong> and click <strong>Open</strong></p>
+      <p>5. Now go to <strong>Plugins > Development > Bind Variables</strong> and click to <strong>Run</strong></p>
+
+      <p>The plugin will find your test button, match the Figma variables by name, and bind them. You should see "Bind Variables has been imported" at the bottom of Figma when it finishes.</p>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Don't use the browser DevTools console.</strong> I made this mistake. If you right-click and "Inspect" in Figma, that opens Chrome DevTools, which CANNOT run <code>figma.variables</code> commands. You need the Figma Plugin system, not the browser console. That's why we're creating a separate plugin instead of pasting into a console.
+      </div>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Don't replace your MCP plugin's code.js.</strong> I also made this mistake. I deleted the MCP plugin's code.js trying to paste the binding script into it. Then I had to restore it with <code>git checkout</code>. Keep the two plugins separate. MCP plugin = talks to Claude. Bind Variables plugin = binds your tokens. Two different jobs, two different plugins.
+      </div>
+  </div>
+
+  <!-- ============ STEP 7 ============ -->
+  <div class="step" data-step="7">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="7"><div class="check-visual"><span class="check-num">7</span></div></label>
+      <div>
+        
+        <div class="step-title">Verify the binding worked on the test button</div>
+      </div>
+    </div>
+    
+      <p>Click on your test button. Look at the <strong>Fill</strong> section in the right sidebar. Instead of <code>2563EB</code> you should now see <code>button/primary/bg/de...</code> with a little diamond icon next to it.</p>
+
+      <p>Check the <strong>Selection colors</strong> section at the bottom of the sidebar too. It should show variable names like <code>button/primary/bg/de...</code> and <code>button/primary/text/d...</code> instead of raw hex values.</p>
+
+      <p>If you see variable names with diamond icons: the pipeline works. Time to build the rest.</p>
+
+      <p>If you still see raw hex values: the binding script didn't match the variable names correctly. Go back to Claude Code and ask: "The binding didn't work. Can you read the code.js file you wrote and check if the variable names match what's in my Figma file? The variables are named like button/primary/bg/default, button/primary/text/default, etc."</p>
+
+      <div class="tip success">
+        <span class="tip-icon">&#10003;</span> <strong>The moment you see that diamond icon, you know the whole pipeline works:</strong> Token JSON → Token Studio → Figma Variables → Claude builds button → Binding plugin connects them. Now we can confidently build the rest.
+      </div>
+  </div>
+
+  <span class="phase-label">Part 4: Build the rest</span>
+
+  <p>The pipeline works. Time to go full production. Build the remaining 5 buttons, re-bind everything, and create the component set.</p>
+
+  <!-- ============ STEP 8 ============ -->
+  <div class="step" data-step="8">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="8"><div class="check-visual"><span class="check-num">8</span></div></label>
+      <div>
+        
+        <div class="step-title">Build the remaining 5 buttons</div>
+      </div>
+    </div>
+    
+      <p>Now that we know the pipeline works, it's time to build the rest. You'll need to reconnect Claude Code to Figma first, because running the binding plugin may have disrupted the MCP connection.</p>
+
+      <h3>Reconnect if needed</h3>
+
+      <p>Check if Claude Code is still connected. Type something simple like "Can you get the document info?" If it times out or errors, you need to reconnect:</p>
+
+      <p>1. Check <strong>Terminal 1</strong> (the socket server). If it crashed, restart it: <code>cd ~/cursor-talk-to-figma-mcp && bun run src/socket.ts</code></p>
+      <p>2. In Figma, re-run the <strong>Cursor MCP Plugin</strong> from Plugins > Development. Copy the new Channel ID.</p>
+      <p>3. In Claude Code, join the new channel: <code>Talk to Figma, join channel [new-channel-ID]</code></p>
+
+      <h3>Build the remaining buttons</h3>
+
+      <p>Once connected, paste this:</p>
+
+      <div class="cmd"><span class="cmd-label">build the remaining 5 buttons</span>Create 5 more buttons in Figma using the same approach as the first one. Here are the specs:
+
+BUTTONS TO CREATE:
+1. Style=Primary, Size=Small — fill #2563EB, text #FFFFFF, padding 8/4, radius 4, font 12
+2. Style=Primary, Size=Large — fill #2563EB, text #FFFFFF, padding 16/12, radius 8, font 16
+3. Style=Secondary, Size=Small — fill #FFFFFF, stroke #E5E7EB 1px, text #374151, padding 8/4, radius 4, font 12
+4. Style=Secondary, Size=Medium — fill #FFFFFF, stroke #E5E7EB 1px, text #374151, padding 12/8, radius 8, font 14
+5. Style=Secondary, Size=Large — fill #FFFFFF, stroke #E5E7EB 1px, text #374151, padding 16/12, radius 8, font 16
+
+All buttons should have:
+- Auto-layout with the specified padding
+- Text label "Button" with font weight 600
+- Frame name exactly as shown (Style=X, Size=Y)
+
+Space them 20px apart from each other and from the existing button.</div>
+
+      <p>This will take a few minutes. Each button needs multiple MCP commands (create frame, set auto-layout, add text, set fill, rename). Don't interrupt Claude while it's working.</p>
+
+      <div class="tip warn">
+        <span class="tip-icon">&#9888;</span> <strong>Figma might lag.</strong> Creating elements programmatically while the plugin is running can make Figma sluggish. Don't force-quit. Just wait. If it freezes for more than 30 seconds, the WebSocket connection might have dropped. Check Terminal 1.
+      </div>
+  </div>
+
+  <!-- ============ STEP 9 ============ -->
+  <div class="step" data-step="9">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="9"><div class="check-visual"><span class="check-num">9</span></div></label>
+      <div>
+        
+        <div class="step-title">Re-run the binding plugin for all buttons</div>
+      </div>
+    </div>
+    
+      <p>You now have 6 buttons on the canvas, but only the first test button has its variables bound. The other 5 still have hardcoded hex values. Time to fix that.</p>
+
+      <p>In Figma, go to <strong>Plugins > Development > Bind Variables</strong> and <strong>Run</strong> it again.</p>
+
+      <p>Because we wrote the binding script to search for nodes by name (anything starting with <code>Style=</code>) instead of hardcoded node IDs, it will find and bind ALL 6 buttons, including the new ones. The first button will get re-bound (harmless), and the 5 new buttons will get their variables for the first time.</p>
+
+      <p>After it runs, click on a few different buttons and check the Fill section. Every button should now show variable names with diamond icons instead of hex values:</p>
+
+      <p><strong>Primary buttons:</strong> Fill shows <code>button/primary/bg/de...</code>, text shows <code>button/primary/text/d...</code></p>
+      <p><strong>Secondary buttons:</strong> Fill shows <code>button/secondary/bg/de...</code>, stroke shows <code>button/secondary/border/de...</code>, text shows <code>button/secondary/text/d...</code></p>
+
+      <img src="all-buttons-bound.png" alt="All 6 buttons with variables bound showing semantic token names in Figma Variables panel" style="width:100%;border-radius:6px;margin:20px 0">
+
+      <div class="tip success">
+        <span class="tip-icon">&#10003;</span> <strong>All 6 buttons bound to variables?</strong> You're almost done. One more step.
+      </div>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> This is why we wrote the plugin to search by name instead of node IDs. You can keep adding buttons with Claude and re-running this plugin as many times as you want. It's reusable.
+      </div>
+  </div>
+
+  <!-- ============ STEP 10 ============ -->
+  <div class="step" data-step="10">
+    <div class="step-header">
+      <label class="step-check"><input type="checkbox" data-step="10"><div class="check-visual"><span class="check-num">10</span></div></label>
+      <div>
+        
+        <div class="step-title">Create the component set (manual)</div>
+      </div>
+    </div>
+    
+      <p>The MCP plugin can't create component sets. This part you do yourself.</p>
+
+      <p><strong>Select each individual button.</strong> Not the group. Not the parent frame. Each individual button frame. Hold <code>Cmd</code> and click each one, or use <code>Cmd+A</code> if they're the only things on the canvas.</p>
+
+      <p><strong>Right-click</strong> and select <strong>"Create component set"</strong>.</p>
+
+      <p>Because Claude named them using the <code>Style=Primary, Size=Medium</code> convention, Figma will automatically parse those into variant properties. You should see "Style" and "Size" as properties in the right sidebar.</p>
+
+      <img src="component-set-result.png" alt="Figma component set with Style and Size variant properties" style="width:100%;border-radius:6px;margin:20px 0">
+
+      <p>After creating the component set, click on any button variant and check the Fill section one more time. The variable binding should still be there. Sometimes creating a component set can break bindings, so double-check.</p>
+
+      <p>If bindings are intact: you now have a button component system with real Figma variables, built using two-layer design tokens (primitive + semantic), with Claude Code doing the heavy lifting.</p>
+
+      <p>That's a real design system workflow. Not a tutorial exercise. An actual production-ready approach.</p>
+
+      <div class="tip">
+        <span class="tip-icon">💡</span> <strong>If Figma says "can't create component set":</strong> You probably selected a group or frame containing the buttons instead of the individual buttons themselves. Click away to deselect, then hold Cmd and click each button one by one.
+      </div>
+  </div>
+
+  <!-- Celebration -->
+  <div id="celebration">
+    <h2>&#127881; You actually did it. Again.</h2>
+    <p>Button components with <em>real Figma variables</em>, built with AI assistance.</p>
+    <p>Two-layer tokens. Semantic references. Variable bindings. The whole thing.</p>
+    <p>We went from "hardcoded hex values" to "actual design system workflow."</p>
+    <p>That's growth. That's character development. That's main character energy.</p>
+    <p>Welcome back to the club.</p>
+  </div>
+
+</div><!-- close .col -->
+
+<div class="col" style="text-align:center;margin-bottom:24px">
+  <p style="color:var(--gray);font-size:1.1rem;font-weight:600">Want to do it all over again?</p>
+  <a href="#" id="resetBtn" style="display:inline-block;margin-top:8px;background:none;border:1px solid #e6e6e6;border-radius:6px;padding:8px 20px;font-family:'Source Sans 3',sans-serif;font-size:.85rem;font-weight:600;color:#6b6b6b;cursor:pointer;text-decoration:none">Re-start</a>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="col" style="margin-bottom:24px">
+  <h2 style="font-family:var(--serif);font-size:1.75rem;font-weight:700;margin:0 0 16px;letter-spacing:-.01em;line-height:1.3">Stuff that went wrong for me</h2>
+
+  <p style="color:var(--gray);margin-bottom:16px">A brief and humiliating recap of my continued suffering, so you don't repeat my mistakes.</p>
+
+  <div class="callout" style="margin-bottom:20px">
+    <p><strong>&#129313; "The MCP bridge can't do that"</strong></p>
+    <p>I spent an embarrassing amount of time trying to get Claude Code to bind variables through the MCP bridge. Different prompts. Different wordings. "Use setBoundVariable." "Use execute_figma_code." "Please?" Finally Claude just leveled with me: <em>"The TalkToFigma MCP server I'm connected to doesn't have an execute_figma_code tool."</em> It only has specific tools like <code>create_frame</code>, <code>set_fill_color</code>, etc. None of them support variable binding. So the two-pass approach isn't a fallback. It's THE approach. I just didn't want to accept it.</p>
+  </div>
+
+  <div class="callout" style="margin-bottom:20px">
+    <p><strong>&#129313; I opened the wrong console</strong></p>
+    <p>Claude said "paste the script into the console." So I right-clicked in Figma, clicked "Inspect," and pasted the script into Chrome DevTools. Red errors everywhere. Spent 10 minutes debugging. Turns out the browser console doesn't have access to <code>figma.variables</code>. That's the Figma <em>Plugin</em> API, not a browser API. Completely different thing. The fix: don't use the browser console at all. Create a proper Figma plugin with <code>manifest.json</code> + <code>code.js</code> and import it. Ask me how I know.</p>
+  </div>
+
+  <div class="callout" style="margin-bottom:20px">
+    <p><strong>&#129313; I deleted the MCP plugin's code.js</strong></p>
+    <p>In a moment of galaxy-brain thinking, I decided to "just paste the binding script into the existing plugin." So I deleted the MCP plugin's <code>code.js</code>. Then the MCP bridge stopped working entirely. Claude couldn't talk to Figma anymore. Panic. Fixed it with <code>cd ~/cursor-talk-to-figma-mcp && git checkout src/cursor_mcp_plugin/code.js</code>. Lesson learned: two plugins, two jobs. Don't touch the MCP plugin files. Ever.</p>
+  </div>
+
+  <div class="callout" style="margin-bottom:20px">
+    <p><strong>&#129313; Claude's script had a typo</strong></p>
+    <p>The binding script Claude wrote had <code>console.warn`Node not found`)</code> instead of <code>console.warn(`Node not found`)</code>. Missing opening parenthesis. One character. Would have crashed the whole script. AI writes code with typos just like the rest of us. Always ask Claude to double-check, or read through it yourself before running.</p>
+  </div>
+
+  <div class="callout" style="margin-bottom:20px">
+    <p><strong>&#129313; MCP timeouts after running the binding plugin</strong></p>
+    <p>After I ran the Bind Variables plugin, the MCP bridge started throwing "Request to Figma timed out" errors. I think running two plugins at the same time confused the WebSocket. Not a big deal since the binding was already done, but if you need to go back to Claude Code after binding, restart the socket server and rejoin the channel. It's the "turn it off and on again" of this whole setup.</p>
+  </div>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="col" style="margin-bottom:24px">
+  <h2 style="font-family:var(--serif);font-size:1.75rem;font-weight:700;margin:0 0 16px;letter-spacing:-.01em;line-height:1.3">The real workflow</h2>
+
+  <p style="color:var(--gray);margin-bottom:16px">Here's what actually happens. No sugarcoating. No "AI does everything while you sip coffee." It's a partnership.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Step</th>
+        <th>Who does it</th>
+        <th>What happens</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>You</td>
+        <td>Write two JSON files (primitive colors + semantic token names)</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Token Studio plugin</td>
+        <td>Reads your JSON and creates Figma variables from them</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>You</td>
+        <td>Connect Claude Code to Figma (socket server + plugin + terminal)</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Claude Code</td>
+        <td>Create any component sets on your Figma canvas with the right colors, padding, and names</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Claude Code</td>
+        <td>Writes a small Figma plugin that connects your buttons to the token variables</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>You</td>
+        <td>Import that plugin into Figma and run it (30 seconds)</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>You</td>
+        <td>Select all buttons, right-click, "Create component set." Done.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="color:var(--gray);margin-bottom:16px">It's not fully automatic. Claude handles the repetitive creation work. You handle the parts that require Figma plugin access and manual component setup. Together it's faster than doing either fully by hand or fully by AI. And honestly? Watching Claude create buttons while you eat snacks is still pretty satisfying.</p>
+</div>
+
+<div class="divider"><hr></div>
+
+<div class="col" style="margin-bottom:24px">
+  <h2 style="font-family:var(--serif);font-size:1.75rem;font-weight:700;margin:0 0 16px;letter-spacing:-.01em;line-height:1.3">What's next</h2>
+
+  <p style="color:var(--gray);margin-bottom:16px">So we got buttons working with tokens. Cool. But a real design system has way more than buttons. I'm curious about what happens when you push this further.</p>
+
+  <p style="color:var(--gray);margin-bottom:16px">Like, what if your tokens have a <strong>light mode and a dark mode?</strong> Can Claude build components that automatically switch colors when you flip between modes? The Figma side supports this (it's called "variable modes"), but can Claude actually handle it through the MCP bridge? I don't know yet.</p>
+
+  <p style="color:var(--gray);margin-bottom:16px">Or what about <strong>syncing tokens from a shared file?</strong> Right now we're copy-pasting JSON by hand. But Token Studio can connect to a GitHub repo, which means your tokens could live in one place and automatically update in Figma whenever someone changes them. No more manual importing. That sounds amazing in theory. I want to see if it actually works in practice.</p>
+
+  <p style="color:var(--gray);margin-bottom:16px">And the big one: <strong>can this scale beyond buttons?</strong> Cards, inputs, navigation bars, modals, all with token bindings. I have a feeling the binding plugin approach will work for any component, but I haven't tested it yet.</p>
+
+  <p style="color:var(--gray)"><strong>Stay tuned for the next noob failure reflection.</strong> &#129761;</p>
+</div>
+
+<div class="footer">
+  <h2>Need an AI noob buddy?</h2>
+  <p>If you're feeling behind, overwhelmed, or just a little alone in this whole AI era... same.</p>
+  <p>We're not too late. Let's stay connected. We'll get there eventually.</p>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap">
+    <a href="https://seeonk.com/ai-kumon" target="_blank" style="display:inline-block;background:var(--text);color:#fff;padding:12px 24px;border-radius:6px;font-size:.9rem;font-weight:600;text-decoration:none;transition:opacity .2s">AI Kumon</a>
+    <a href="https://www.linkedin.com/in/seeonkim/" target="_blank" style="display:inline-block;background:var(--bg);color:var(--text);border:1.5px solid var(--border);padding:12px 24px;border-radius:6px;font-size:.9rem;font-weight:600;text-decoration:none;transition:border-color .2s">Connect on LinkedIn</a>
+  </div>
+</div>
+
+<script>
+// Progress tracker
+(function(){
+  const TOTAL=11;
+  const KEY='token-guide-v1';
+  let saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  const boxes=document.querySelectorAll('input[data-step]');
+  const fill=document.getElementById('progFill');
+  const txt=document.getElementById('progTxt');
+  const celeb=document.getElementById('celebration');
+
+  function update(){
+    let count=0;
+    boxes.forEach(cb=>{
+      const card=cb.closest('.step');
+      if(cb.checked){count++;if(card)card.classList.add('done');}
+      else{if(card)card.classList.remove('done');}
+    });
+    const pct=Math.round((count/TOTAL)*100);
+    fill.style.width=pct+'%';
+    txt.textContent=count+' / '+TOTAL+(count===TOTAL?' done!':'');
+    txt.style.color=count===TOTAL?'var(--accent)':'';
+    celeb.style.display=count===TOTAL?'block':'none';
+  }
+  boxes.forEach(cb=>{
+    if(saved[cb.dataset.step])cb.checked=true;
+    cb.addEventListener('change',function(){
+      saved[this.dataset.step]=this.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}
+      update();
+    });
+  });
+  update();
+  document.getElementById('resetBtn').addEventListener('click',function(e){
+    e.preventDefault();
+    boxes.forEach(function(cb){cb.checked=false;});
+    saved={};
+    try{localStorage.setItem(KEY,'{}');}catch(e){}
+    update();
+    var first=document.querySelector('[data-step="0"]');
+    if(first&&first.closest('.step'))first.closest('.step').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+})();
+
+// Copy buttons for code blocks and JSON blocks
+document.querySelectorAll('.cmd, .json-block').forEach(function(block){
+  var btn=document.createElement('span');
+  btn.className='cmd-copy';
+  btn.textContent='copy';
+  btn.addEventListener('click',function(){
+    var clone=block.cloneNode(true);
+    var label=clone.querySelector('.cmd-label');
+    if(label)label.remove();
+    var copy=clone.querySelector('.cmd-copy');
+    if(copy)copy.remove();
+    var text=clone.textContent.trim();
+    var ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';
+    ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent='copied!';
+    setTimeout(function(){btn.textContent='copy';},1500);
+  });
+  block.appendChild(btn);
+});
+</script>
+
+</body>
+</html>
