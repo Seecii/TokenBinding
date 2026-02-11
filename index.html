@@ -421,15 +421,15 @@ code{background:var(--code-bg);padding:2px 6px;border-radius:3px;font-family:var
 
       <p><strong>Open Token Studio:</strong> Right-click on the canvas, or go to Menu &#8594; Plugins &#8594; Tokens Studio for Figma.</p>
 
-      <p><strong>Start a new project:</strong> If it asks, choose "New empty file."</p>
+      <p><strong>Start a new project:</strong> Token Studio opens with a default <code>global</code> set. You can leave it or ignore it.</p>
 
-      <p><strong>Create the primitive token set:</strong> In Token Studio, you'll see a sidebar on the left with token sets. Click the <strong>+</strong> icon to create a new set. Name it <code>primitive</code>. Switch to JSON view (toggle at top right), delete the default content, and paste your <code>primitive.json</code> content.</p>
+      <p><strong>Create the primitive token set:</strong> In Token Studio, you'll see a sidebar on the left with token sets. Click <strong>+ New Set</strong> to create a new set. Name it <code>primitive</code>. Switch to JSON view (the <strong>{ }</strong> icon at top right), delete the default content, and paste your <code>primitive.json</code> content.</p>
 
-      <p><strong>Create the semantic token set:</strong> Click <strong>+</strong> again to create another set. Name it <code>semantic</code>. Switch to JSON view, and paste your <code>semantic.json</code> content.</p>
+      <p><strong>Create the semantic token set:</strong> Click <strong>+ New Set</strong> again to create another set. Name it <code>semantic</code>. Switch to JSON view, and paste your <code>semantic.json</code> content.</p>
 
       <p><strong>Enable BOTH sets:</strong> In the left sidebar, make sure both <code>primitive</code> and <code>semantic</code> have their checkboxes checked (active). The semantic tokens need the primitives to resolve their <code>{references}</code>. If you only enable one, the references will show as broken.</p>
 
-      <p><strong>Push to Figma:</strong> Click the "Styles & Variables" button at the bottom of the Token Studio panel. Select "Export variables." Choose "Create new variables" and confirm.</p>
+      <p><strong>Push to Figma:</strong> Click the <strong>Styles & Variables</strong> dropdown at the bottom of the Token Studio panel. Select <strong>"Export styles & variables to Figma."</strong> Confirm when prompted.</p>
 
       <img src="token-studio-export.png" alt="Token Studio showing primitive and semantic sets with Styles & Variables export menu" style="width:100%;border-radius:6px;margin:20px 0">
 
@@ -813,7 +813,7 @@ Space them 20px apart from each other and from the existing button.</div>
     <tbody>
       <tr>
         <td>1</td>
-        <td>You or Ask any LLM</td>
+        <td>You</td>
         <td>Write two JSON files (primitive colors + semantic token names)</td>
       </tr>
       <tr>
